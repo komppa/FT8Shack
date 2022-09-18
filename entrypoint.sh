@@ -30,7 +30,7 @@ fi
 
 # If artefact folder exists, delete it
 if [ -d "artefact" ]; then
-  echo "Artefact dir existed! Deleting it!"
+  echo "Artefact dir exists! Deleting it!"
   rm -rf artefact
 fi
 

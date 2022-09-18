@@ -23,23 +23,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      
-      # Get files
-      - name: Get files
-        run: |
-          echo $(ls -la)
-          echo $(pwd)
 
-      # Runs a set of commands using the runners shell
-      - name: Build docker image
-        run: |
-          echo Add other actions to build
-          docker build -t qwerty .
-          
       - name: Run docker image
         run: |
           echo "Running docker container..."
-          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i qwerty
+          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i komppa/github-actions-expo-build
         env:
           EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
           EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}
