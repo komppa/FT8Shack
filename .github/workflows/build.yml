@@ -7,8 +7,6 @@ on:
   # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,6 +16,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
+    # runs-on: [self-hosted, Linux, X64]
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -39,16 +38,40 @@ jobs:
           
       - name: Run docker image
         run: |
-          echo "Running docker container.........."
-          docker run -v "$(pwd)"/output:/home/ci/project/artefact -i qwerty
+          echo "Running docker container..."
+          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -i qwerty
         env:
           EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
           EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}
           EXPO_KEY_JKS: ${{ secrets.EXPO_KEY_JKS }}
 
-      # Show built files
-      - name: Show build output files
-        run: |
-          echo $(ls output)
-          echo $(ls)
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            
+            ${{ github.event.head_commit.message }}
+          draft: true
+          prerelease: false
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./FT8Shack.apk
+          asset_name: FT8Shack.apk
+          asset_content_type: application/vnd.android.package-archive
+      - name: Publish release
+        uses: StuYarrow/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          id: ${{ steps.create_release.outputs.id }}
         
