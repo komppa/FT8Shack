@@ -24,10 +24,24 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+
+      - name: Show the release version
+        run: |
+          echo "Version of this release"
+          echo ${{ steps.package-version.outputs.current-version}}
+
+      - name: Build docker image
+        run: |
+          echo "Building docker image"
+          docker build -t qwerty .
+
       - name: Run docker image
         run: |
           echo "Running docker container..."
-          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i komppa/github-actions-expo-build
+          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i qwerty
         env:
           EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
           EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}
@@ -41,10 +55,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
           tag_name: ${{ github.run_number }}
-          release_name: Release ${{ github.ref }}
+          release_name: Release ${{ steps.package-version.outputs.current-version}}
           body: |
-            Changes in this Release
-            
+            Release ${{ steps.package-version.outputs.current-version}}
+
             ${{ github.event.head_commit.message }}
           draft: true
           prerelease: false

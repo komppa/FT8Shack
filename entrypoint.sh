@@ -33,6 +33,18 @@ if [ -d "artefact" ]; then
   echo "Artefact dir exists! Deleting it!"
   rm -rf artefact
 fi
+if [ -d "android" ]; then
+  echo "Android dir exists! Deleting it!"
+  rm -rf android
+fi
+if [ -d "ios" ]; then
+  echo "Ios dir exists! Deleting it!"
+  rm -rf ios
+fi
+if [ -d "node_modules" ]; then
+  echo "Node_modules dir exists! Deleting it!"
+  rm -rf node_modules
+fi
 
 
 yarn install
