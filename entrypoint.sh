@@ -20,6 +20,14 @@ else
      echo "Value is assigned to a variable EXPO_ANDROID_KEY_PASSWORD"
 fi
 
+
+if [ x"${EXPO_KEYSTORE_ALIAS}" == "x" ]; then 
+     echo "Value is not assigned to a variable EXPO_KEYSTORE_ALIAS"
+else
+     echo "Value is assigned to a variable EXPO_KEYSTORE_ALIAS"
+fi
+
+
 # If artefact folder exists, delete it
 if [ -d "artefact" ]; then
   echo "Artefact dir existed! Deleting it!"

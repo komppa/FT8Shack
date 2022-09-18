@@ -44,6 +44,7 @@ jobs:
           EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
           EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}
           EXPO_KEY_JKS: ${{ secrets.EXPO_KEY_JKS }}
+          EXPO_KEYSTORE_ALIAS: ${{ secrets.EXPO_KEYSTORE_ALIAS }}
 
       - name: Create release
         id: create_release
