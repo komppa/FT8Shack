@@ -1,0 +1,1 @@
+export const encode_ft8_code = []
