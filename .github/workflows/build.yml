@@ -39,7 +39,7 @@ jobs:
       - name: Run docker image
         run: |
           echo "Running docker container..."
-          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -i qwerty
+          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i qwerty
         env:
           EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
           EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}

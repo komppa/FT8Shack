@@ -49,7 +49,7 @@ echo $(ls)
 # EXPO_ANDROID_KEY_PASSWORD=$EXPO_ANDROID_KEY_PASSWORD \
 turtle build:android \
 --type apk --keystore-path /home/ci/project/secret_key.jks \
---keystore-alias "keyalias" --allow-non-https-public-url \
+--keystore-alias "$(echo $EXPO_KEYSTORE_ALIAS)" --allow-non-https-public-url \
 --public-url http://127.0.0.1:8000/android-index.json
 
 
