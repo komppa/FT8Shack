@@ -25,6 +25,7 @@ if [ x"${EXPO_KEYSTORE_ALIAS}" == "x" ]; then
      echo "Value is not assigned to a variable EXPO_KEYSTORE_ALIAS"
 else
      echo "Value is assigned to a variable EXPO_KEYSTORE_ALIAS"
+     echo "Length of the alias $(echo $EXPO_KEYSTORE_ALIAS |awk '{print length}')"
 fi
 
 
@@ -45,18 +46,19 @@ if [ -d "node_modules" ]; then
   echo "Node_modules dir exists! Deleting it!"
   rm -rf node_modules
 fi
-if [ -d "/root/.gradle" ]; then
-  echo "Gradle dir under root exists! Deleting it!"
-  rm -rf /root/.gradle/
 
-  if [ -d "/root/.gradle" ]; then
-     echo "After deleting, still exists. Trying to delete with greater force"
-     sudo rm -rf /root/.gradle/
-  else
-     echo "Gradle under root has been deleted 1st try"
-  fi
+# if [ -d "/root/.gradle" ]; then
+#   echo "Gradle dir under root exists! Deleting it!"
+#   rm -rf /root/.gradle/
 
-fi
+#   if [ -d "/root/.gradle" ]; then
+#      echo "After deleting, still exists. Trying to delete with greater force"
+#      sudo rm -rf /root/.gradle/
+#   else
+#      echo "Gradle under root has been deleted 1st try"
+#   fi
+
+# fi
 
 yarn install
 

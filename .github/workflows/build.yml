@@ -40,17 +40,29 @@ jobs:
       - name: Build docker image
         run: |
           echo "Building docker image"
-          docker build -t qwerty .
+          docker build --no-cache -t qwerty .
 
       - name: Run docker image
         run: |
           echo "Running docker container..."
-          docker run -v "$(pwd)":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i qwerty
-        env:
-          EXPO_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.EXPO_ANDROID_KEYSTORE_PASSWORD }}
-          EXPO_ANDROID_KEY_PASSWORD: ${{ secrets.EXPO_ANDROID_KEY_PASSWORD }}
-          EXPO_KEY_JKS: ${{ secrets.EXPO_KEY_JKS }}
-          EXPO_KEYSTORE_ALIAS: ${{ secrets.EXPO_KEYSTORE_ALIAS }}
+          if [ -d artefact ]
+          then 
+          echo "Artefact folder exists, deleting it"
+          rm -rf artefact
+          mkdir artefact
+          fi
+          docker run --rm -v "$(pwd)/artefact":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i qwerty
+
+      - name: Copy app from artefact folder
+        run: |
+          echo "Copying apk from artefact folder"
+          if [ ! -d artefact ]
+          then
+          echo "Artefact folder does not exist!"
+          else
+          echo "Artefact folder exsits, copying"
+          cp artefact/FT8Shack.apk .
+          fi
 
       - name: Create release
         id: create_release
