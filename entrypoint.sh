@@ -67,21 +67,23 @@ expo export --dev --public-url http://127.0.0.1:8000
 (sleep 2; echo y;) | expo prebuild
 
 
+if [ -f "key.jks" ]
+then
+rm key.jks
+fi
+
+touch key.jks
+
+printf "$EXPO_KEY_JKS" | base64 -d > key.jks
 
 
 npx http-server -p 8000 dist &
 
 
-(echo "$EXPO_KEY_JKS"|base64 -d) > secret_key.jks
-
-echo "Content of the current directory "
-echo $(ls)
-
-
 # EXPO_ANDROID_KEYSTORE_PASSWORD=$EXPO_ANDROID_KEYSTORE_PASSWORD \
 # EXPO_ANDROID_KEY_PASSWORD=$EXPO_ANDROID_KEY_PASSWORD \
 turtle build:android \
---type apk --keystore-path /home/ci/project/secret_key.jks \
+--type apk --keystore-path /home/ci/project/key.jks \
 --keystore-alias "o+ZugHCft6ocvA==" --allow-non-https-public-url \
 --public-url http://127.0.0.1:8000/android-index.json
 
