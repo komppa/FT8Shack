@@ -16,18 +16,14 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    # runs-on: [self-hosted, Linux, X64]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
+    # runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - uses: actions/checkout@v2
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        
       - name: get-npm-version
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
@@ -37,32 +33,64 @@ jobs:
           echo "Version of this release"
           echo ${{ steps.package-version.outputs.current-version}}
 
-      - name: Build docker image
+      - name: Install deps for Ubuntu
         run: |
-          echo "Building docker image"
-          docker build --no-cache -t qwerty .
+          sudo apt install -y curl
+          sudo apt install -y default-jdk
+          sudo curl -sL https://deb.nodesource.com/setup_16.x | sudo bash
+          sudo apt install -y nodejs
 
-      - name: Run docker image
+      - name: Install deps for node
         run: |
-          echo "Running docker container..."
-          if [ -d artefact ]
-          then 
-          echo "Artefact folder exists, deleting it"
-          rm -rf artefact
-          mkdir artefact
-          fi
-          docker run --rm -v "$(pwd)/artefact":/home/ci/project/artefact -eEXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" -eEXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" -eEXPO_KEY_JKS="${{secrets.EXPO_KEY_JKS}}" -eEXPO_KEYSTORE_ALIAS="${{secrets.EXPO_KEYSTORE_ALIAS}}" -i qwerty
+          sudo npm i -g yarn
+          sudo yarn global add http-server
+          sudo yarn global add expo-cli
+          sudo yarn global add turtle-cli
 
-      - name: Copy app from artefact folder
+      - name: Install prject deps
         run: |
-          echo "Copying apk from artefact folder"
-          if [ ! -d artefact ]
+          yarn install
+          expo export --dev --public-url http://127.0.0.1:8000
+          (sleep 2; echo y;) | expo prebuild
+
+          if [ -f "key.jks" ]
           then
-          echo "Artefact folder does not exist!"
-          else
-          echo "Artefact folder exsits, copying"
-          cp artefact/FT8Shack.apk .
+          rm key.jks
           fi
+
+          touch key
+
+          printf "${{secrets.EXPO_KEY_JKS}}" | base64 -d > "$(pwd)/key.jks"
+          echo "Length of the key jks"
+          echo "$(cat key.jks | awk '{print length}')"
+
+          npx http-server -p 8000 dist &
+          
+          sudo EXPO_ANDROID_KEYSTORE_PASSWORD="${{secrets.EXPO_ANDROID_KEYSTORE_PASSWORD}}" EXPO_ANDROID_KEY_PASSWORD="${{secrets.EXPO_ANDROID_KEY_PASSWORD}}" turtle build:android \
+          --type apk --keystore-path "$(pwd)/key.jks" \
+          --keystore-alias "${{secrets.EXPO_KEYSTORE_ALIAS}}" --allow-non-https-public-url \
+          --public-url http://127.0.0.1:8000/android-index.json
+
+      - name: List files
+        run: |
+          echo $(ls)
+
+      - name: Get built APK
+        run: |
+          echo "CONTENT OF THE EXPO_APP: $(ls /root/expo-apps)"
+
+          sudo mv "/root/expo-apps/$(sudo ls -la /root/expo-apps/ |grep .apk |awk '{print $9}')" FT8Shack.apk
+
+          echo "1: $(sudo ls -la /root/expo-apps/)"
+          echo "2: $(sudo ls -la /root/expo-apps/ |grep .apk |awk '{print $9}')"
+
+          if [ -d /root/expo-apps ]
+          then
+            sudo rm -rf /root/expo-apps/*
+          fi
+
+
+
 
       - name: Create release
         id: create_release
