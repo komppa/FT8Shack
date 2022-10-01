@@ -1,6 +1,12 @@
 const fs = require("fs")
 
-let buf = fs.readFileSync("toimi.wasm")
+const [ inputFile ] = process.argv.slice(2)
+const [ outputFile ] = inputFile.split(".")
+
+console.log(`Using "${inputFile}" as a input file`)
+console.log(`Output file will be named as "${outputFile}`)
+
+let buf = fs.readFileSync(inputFile)
 let buf2 = ""
 
 
@@ -19,12 +25,10 @@ const getDoubleCharacter = (proposal) => {
 }
 
 
-{/* <Buffer 00 61 73 6d 01 00 00 00 01 a4 82 80 80 00 2d 60 01 7f 01 7f 60 03 7f 7f 7f 01 7f 60 02 7f 7f 01 7f 60 00 01 7f 60 0 */}
-
 for (let i = 0; i < buf.length; i++) {
     buf2 += getDoubleCharacter(buf[i])
 }
 
 buf2 = buf2.slice(0, -1)
 
-fs.writeFile("output.txt", buf2, "binary", (err) => console.log("err", err))
+fs.writeFile(`${outputFile}.txt`, buf2, "binary", (err) => console.log("err", err))

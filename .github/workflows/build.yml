@@ -16,7 +16,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, default]
     # runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -47,6 +47,55 @@ jobs:
           sudo yarn global add expo-cli
           sudo yarn global add turtle-cli
 
+      - name: Build and integrate FT8 library
+        run: |
+
+          # Install emsdk for building FT8 library
+
+          # Save a point where I was
+          CURR=`pwd`
+
+          sudo apt update
+          sudo apt install -y git
+          if [ -d "/app" ]
+          then
+          rm -rf /app
+          fi
+          mkdir /app
+          cd /app
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          git pull
+
+          apt install -y python3
+          apt install -y xz-utils
+          apt install -y lbzip2
+
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+
+          # Go back to the point where I was
+          cd $CURR
+
+          cd ft8_lib
+
+          # Build encoder
+          emcc gen_ft8.c ft8/constants.c ft8/text.c ft8/pack.c ft8/encode.c ft8/crc.c common/wave.c -lm -o encoder.wasm -sEXPORTED_FUNCTIONS="['_get_audio_buffer', '_initialize_audio_buffer', '_customFwrite', '_gen_ft8']" --no-entry
+
+          # Build decoder 
+          emcc gen_ft8.c ft8/constants.c ft8/text.c ft8/pack.c ft8/encode.c ft8/crc.c common/wave.c -lm -o decoder.wasm -sEXPORTED_FUNCTIONS="['_get_audio_buffer', '_initialize_audio_buffer', '_customFwrite', '_gen_ft8']" --no-entry
+
+          # Convert wasm(s) byte array
+          node wasm2js.js encoder.wasm
+          node wasm2js.js decoder.wasm
+
+          cd ..
+
+          echo "export const encode_ft8_code=[$(cat ft8_lib/encoder.txt)]" > encode_ft8_code_external.js
+          echo "export const decode_ft8_code=[$(cat ft8_lib/decoder.txt)]" > decode_ft8_code_external.js
+
+
       - name: Install prject deps
         run: |
           yarn install
@@ -61,8 +110,6 @@ jobs:
           touch key
 
           printf "${{secrets.EXPO_KEY_JKS}}" | base64 -d > "$(pwd)/key.jks"
-          echo "Length of the key jks"
-          echo "$(cat key.jks | awk '{print length}')"
 
           npx http-server -p 8000 dist &
           
@@ -71,9 +118,6 @@ jobs:
           --keystore-alias "${{secrets.EXPO_KEYSTORE_ALIAS}}" --allow-non-https-public-url \
           --public-url http://127.0.0.1:8000/android-index.json
 
-      - name: List files
-        run: |
-          echo $(ls)
 
       - name: Get built APK
         run: |
