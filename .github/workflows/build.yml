@@ -84,7 +84,7 @@ jobs:
           emcc gen_ft8.c ft8/constants.c ft8/text.c ft8/pack.c ft8/encode.c ft8/crc.c common/wave.c -lm -o encoder.wasm -sEXPORTED_FUNCTIONS="['_get_audio_buffer', '_initialize_audio_buffer', '_customFwrite', '_gen_ft8']" --no-entry
 
           # Build decoder 
-          emcc gen_ft8.c ft8/constants.c ft8/text.c ft8/pack.c ft8/encode.c ft8/crc.c common/wave.c -lm -o decoder.wasm -sEXPORTED_FUNCTIONS="['_get_audio_buffer', '_initialize_audio_buffer', '_customFwrite', '_gen_ft8']" --no-entry
+          emcc decode_ft8.c fft/kiss_fftr.c fft/kiss_fft.c ft8/decode.c ft8/encode.c ft8/crc.c ft8/ldpc.c ft8/unpack.c ft8/text.c ft8/constants.c common/wave.c -lm -o decoder.wasm -sEXPORTED_FUNCTIONS="['_get_audio_buffer', '_decode_ft8', '_get_msgs_count', '_get_msg_by_index', '_initialize_audio_buffer', '_get_i0', '_get_i50', '_get_i100', '_get_i150', '_get_time_by_message_id', '_get_freq_by_message_id', '_get_text_by_message_id']" --no-entry
 
           # Convert wasm(s) byte array
           node wasm2js.js encoder.wasm

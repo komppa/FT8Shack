@@ -183,7 +183,7 @@ export default function Ft8() {
             console.log('Recording stopped and stored at', recordingUri);
 
             let sourceFile = recordingUri;
-            let destinationFile = `file:///data/user/0/com.rantakangas.ft8shack/cache/Audio/myConversion21.wav`; // fileForConvertedRecord
+            let destinationFile = `file:///data/user/0/com.rantakangas.ft8shack/cache/Audio/myConversion22.wav`; // fileForConvertedRecord
 
             console.log("sourceFile", sourceFile, "& destinationFile", destinationFile);
 
@@ -202,12 +202,20 @@ export default function Ft8() {
                         length: 350000
                     })
 
-
                     emit({ type: "DECODE_FT8", data: array16FromBuffer(Buffer.from(testFile, 'base64')) })
+
+                    console.log("Deleting recoded audio")
+                    await StorageAccessFramework.deleteAsync(destinationFile, { idempotent: true })
+                    console.log(`Deleted file: "${destinationFile}"`)
 
 
                 })
-                .catch(err => console.log(`FFmpeg errored!! #: ${err.message} ::: ${err}`))
+                .catch(async (err) => {
+                    console.log(`FFmpeg errored!! #: ${err.message} ::: ${err}`)
+                    console.log("...still, deleting recoded audio")
+                    await StorageAccessFramework.deleteAsync(destinationFile, { idempotent: true })
+                    console.log(`Deleted file: "${destinationFile}"`)
+                })
         }
 
 
