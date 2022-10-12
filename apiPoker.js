@@ -1,11 +1,14 @@
+import React from 'react'
 import {
     webViewRender,
     emit,
     useNativeMessage,
-} from "react-native-react-bridge/lib/web";
+} from 'react-native-react-bridge/lib/web'
 
 // Using require since ecma import yells the super long array out to the console
+// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
 const { encode_ft8_code } = require('./encode_ft8_code_external')
+// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
 const { decode_ft8_code } = require('./decode_ft8_code_external')
 
 
@@ -17,7 +20,7 @@ var apiPokerGlobal
  */
 const log = (text) => {
     emit({
-        type: "LOG",
+        type: 'LOG',
         data: text
     })
 }
@@ -25,47 +28,47 @@ const log = (text) => {
 
 const generate_ft8_here = async (message) => {
 
-    log("@generate_ft8_here")
+    log('@generate_ft8_here')
 
     const memory = new WebAssembly.Memory({
         initial: 256,
         maximum: 256,
         shared: true
-    });
+    })
 
 
-    const heap = new Uint16Array(memory.buffer);
+    const heap = new Uint16Array(memory.buffer)
 
     const imports = {
         env: {
             memory: memory
         }
-    };
+    }
     
     
-    log("@generate_ft8_here: importing wasmSource")
-    const wasmSource = new Uint8Array(encode_ft8_code); // TODO CRIT is this 8 or 16
-    log("@generate_ft8_here: wasmSource imported")
+    log('@generate_ft8_here: importing wasmSource')
+    const wasmSource = new Uint8Array(encode_ft8_code) // TODO CRIT is this 8 or 16
+    log('@generate_ft8_here: wasmSource imported')
 
     let wasmModule
 
     try { 
 
-        log("@generate_ft8_here: initializing wasmModule by compiling wasmSource")
+        log('@generate_ft8_here: initializing wasmModule by compiling wasmSource')
         wasmModule = await WebAssembly.compile(wasmSource)
-        log("@generate_ft8_here: compiler wasmSource to wasmModule")
+        log('@generate_ft8_here: compiler wasmSource to wasmModule')
 
 
 
         let wasmInstance
         try {
 
-            log("@generate_ft8_here: creating new instance for wasm")
+            log('@generate_ft8_here: creating new instance for wasm')
 
             // new WebAssembly.Instance(wasmModule, imports);
             const wasmInstance = await WebAssembly.instantiate(wasmModule, imports)
 
-            log("@generate_ft8_here: wasm insntace instantiated")
+            log('@generate_ft8_here: wasm insntace instantiated')
             log(`@generate_ft8_here: putting message "${message.data}" to the buffer of the wasm instance`)
             
             for (let i = 0; i < 13; i++) {
@@ -77,10 +80,10 @@ const generate_ft8_here = async (message) => {
                 // // TODO initialize message_in buffer from here or better, from C code
             }
 
-            log("@generate_ft8_here: Message sent to buffer of wasm instance")
+            log('@generate_ft8_here: Message sent to buffer of wasm instance')
 
 
-            log("@generate_ft8_here: Calling gen_ft8 function!")
+            log('@generate_ft8_here: Calling gen_ft8 function!')
             const statusCodeGenft8 = wasmInstance.exports.gen_ft8()
             log(`@generate_ft8_here: Function returned status code of "${statusCodeGenft8}"!`)
 
@@ -88,7 +91,7 @@ const generate_ft8_here = async (message) => {
             // emit({ type: "LOG", data: "Reading heap"})
 
 
-            log("Ripping audio file from the memory of wasm instance")
+            log('Ripping audio file from the memory of wasm instance')
             const dataArray = new Uint16Array(
                 wasmInstance.exports.memory.buffer,
                 wasmInstance.exports.get_audio_buffer(),
@@ -97,7 +100,7 @@ const generate_ft8_here = async (message) => {
 
             // TODO any faster method of doing this?
             // TODO what is size of the actual sound? Could this array be minimized down to like 300k?
-            log("Changing the format of the buffer to regular non-typed array")
+            log('Changing the format of the buffer to regular non-typed array')
             const returnDataArray = []
             for (let i = 0; i < 350000; i++) {
                 returnDataArray.push(
@@ -105,16 +108,16 @@ const generate_ft8_here = async (message) => {
                 )
             }
 
-            log("Sending audio file back to the App!")
-            emit({ type: "saveAndPlayDecodedMessage", data: returnDataArray})
+            log('Sending audio file back to the App!')
+            emit({ type: 'saveAndPlayDecodedMessage', data: returnDataArray})
 
         } catch (e) {
-            emit({ type: "LOG_ERROR_WASMINSTANCE", data: e.message })
+            emit({ type: 'LOG_ERROR_WASMINSTANCE', data: e.message })
 
         }                
 
     } catch (e) {
-        emit({ type: "LOG_ERROR_WAMSMODULE", data: e.message })
+        emit({ type: 'LOG_ERROR_WAMSMODULE', data: e.message })
     }
 
 
@@ -130,7 +133,7 @@ const decode_ft8_here = async (message) => {
     for (let i = 0; i < 350000; i++) {
 
         if (i == 18) {  // @ index 18, 'data' should start
-            log("is now 18")
+            log('is now 18')
             // Seek start of data
             for (let j = i; j < i + 50; j++) {  // Limit for searching 'data' is current position + 50
                 // [64, 61, 74, 61] EQUALS ['d', 'a', 't', 'a'] EQUALS [25697, 29793]
@@ -173,20 +176,20 @@ const decode_ft8_here = async (message) => {
         initial: 256,
         maximum: 256,
         shared: true
-    });
+    })
 
 
-    const decoder_heap = new Uint16Array(decoder_memory.buffer);
+    const decoder_heap = new Uint16Array(decoder_memory.buffer)
 
     const decoder_imports = {
         env: {
             memory: decoder_memory
         }
-    };
+    }
 
-    const decoderWasmSource = new Uint8Array(decode_ft8_code); // TODO CRIT is this 8 or 16
+    const decoderWasmSource = new Uint8Array(decode_ft8_code) // TODO CRIT is this 8 or 16
 
-    log("decoderWasmSource declared")
+    log('decoderWasmSource declared')
 
     let decoderWasmModule
 
@@ -201,9 +204,9 @@ const decode_ft8_here = async (message) => {
             // new WebAssembly.Instance(decoderWasmModule, imports);
             const decoderWasmInstance = await WebAssembly.instantiate(decoderWasmModule, decoder_imports)
 
-            log("Initializing audio buffer")
+            log('Initializing audio buffer')
             decoderWasmInstance.exports.initialize_audio_buffer()
-            log("Audio buffer initialized")
+            log('Audio buffer initialized')
 
             // Write audio samples to memory of wasm instance
 
@@ -214,7 +217,7 @@ const decode_ft8_here = async (message) => {
             73
             */
 
-            let writeTip = 0;
+            let writeTip = 0
 
             for (let i = 0; i < 350000; i++) {    // message.data.length
 
@@ -246,8 +249,8 @@ const decode_ft8_here = async (message) => {
                 )[1] = (message.data[i] & 0xFF00) >> 8  // 
                 */
 
-                writeTip++;
-                writeTip++;
+                writeTip++
+                writeTip++
 
             }
 
@@ -264,12 +267,12 @@ const decode_ft8_here = async (message) => {
                     )[0].toString(16)
                 )
 
-                reading_tip_test++;
-                reading_tip_test++;
+                reading_tip_test++
+                reading_tip_test++
 
             }
     
-            log("calling decode_ft8")
+            log('calling decode_ft8')
             const returnCode = decoderWasmInstance.exports.decode_ft8()
             log(`called decode_ft8 returned status code of ${returnCode}`)
 
@@ -344,7 +347,7 @@ const decode_ft8_here = async (message) => {
 
             // TODO emit messages count and empty array of messages back to react-native
             if (numDecoded[0] === 0) {
-                emit({ type: "LOG", data: `... so we are stopping getting actual messages!!!¤%&` })
+                emit({ type: 'LOG', data: '... so we are stopping getting actual messages!!!¤%&' })
                 return
             }
 
@@ -358,8 +361,8 @@ const decode_ft8_here = async (message) => {
                 score: 0,
                 freq: 0,
                 time: 0,
-                text: ""
-            };
+                text: ''
+            }
 
 
             let decodedMessages = []
@@ -402,7 +405,7 @@ const decode_ft8_here = async (message) => {
                     25
                 )
                 // Convert ints to ascii
-                let textString = "";
+                let textString = ''
                 for (let j = 0; j < 25; j++) {  // 25 is hardcoded length of ft8_lib for text message
                     if (text[j] !== 0) {
                         textString += String.fromCharCode(text[j])
@@ -442,13 +445,13 @@ const decode_ft8_here = async (message) => {
             // }
 
 
-            log("Sending decoded message back to the App!")
+            log('Sending decoded message back to the App!')
             log(`${JSON.stringify(decodedMessages)}`)
-            emit({ type: "showContent", data: decodedMessages})
+            emit({ type: 'showContent', data: decodedMessages})
 
         } catch (e) {
             log(`ERR: apiPoker: decode_ft8_here: err: ${e.message}`)
-            emit({ type: "LOG", data: e.message })
+            emit({ type: 'LOG', data: e.message })
 
         }                
 
@@ -467,34 +470,34 @@ const ApiPoker = () => {
     useNativeMessage(async (message) => {
 
         switch(message.type) {
-            case "ENCODE_FT8":
-                log("Selected to encode FT8")
-                log(`Message that will be encoded: "${message.data}"`)
-                generate_ft8_here(message)
-                break
-            case "DECODE_FT8":
-                log("Selected to decode FT8")
-                decode_ft8_here(message)
-                break
-            default:
-                log(`Selection unknown: ${message.type}`)
-                break
+        case 'ENCODE_FT8':
+            log('Selected to encode FT8')
+            log(`Message that will be encoded: "${message.data}"`)
+            generate_ft8_here(message)
+            break
+        case 'DECODE_FT8':
+            log('Selected to decode FT8')
+            decode_ft8_here(message)
+            break
+        default:
+            log(`Selection unknown: ${message.type}`)
+            break
         }
 
-        return 0;   // TODO CRIT remove
+        return 0   // TODO CRIT remove
         
 
         /**
          * RETURNING THAT THE ENCODING WOULD NOT BE EXECUTED SINCE WE ARE TESTING DECORED!!!
          */
 
-    }); // End of useNativeMessage
+    }) // End of useNativeMessage
 
     // Return some JSX since this must be a valid renderable React component
-    return (<></>);
+    return (<></>)
     
-};
+}
 
 
 // Not just export default "ApiPoker" since this is WebView
-export default webViewRender(<ApiPoker />);
+export default webViewRender(<ApiPoker />)

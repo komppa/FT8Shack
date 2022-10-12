@@ -1,7 +1,8 @@
+import React from 'react'
 import { Provider } from 'react-redux'
 import { store } from './state/store'
 import Ft8 from './Ft8'
-import { NativeBaseProvider, Box, Text, Center } from "native-base"
+import { NativeBaseProvider, Box, Text, Center } from 'native-base'
 import { Progress } from 'native-base'
 import { useState, useEffect } from 'react'
 
@@ -16,7 +17,7 @@ export default function App() {
                 (seconds) => seconds < 15 ? seconds + 1 : 0
             )
 
-        }, 500)
+        }, 1000)
     }, [])
 
     
@@ -24,34 +25,38 @@ export default function App() {
         <>
             
             <NativeBaseProvider>
-                
-                <Box style={{ height: 30 }} />
+                <Provider store={ store }>
 
-                <Box style={{
-                    height: 20,
-                    position: "relative",
-                }}>
-                    <Progress size="2xl" value={(100 / 15) * seconds} mx="4" style={{
+                
+                    <Box style={{ height: 30 }} />
+
+                    <Box style={{
                         height: 20,
-                    }} />
-                    <Center style={{
-                        position: "absolute",
-                        height: 20,
-                        width: "100%",
+                        position: 'relative',
                     }}>
-                        <Text style={{
-                            color: "black",
-                            textAlign: "center",
+                        <Progress size="2xl" value={(100 / 15) * seconds} mx="4" style={{
+                            height: 20,
+                        }} />
+                        <Center style={{
+                            position: 'absolute',
+                            height: 20,
+                            width: '100%',
                         }}>
-                            { `${seconds}/15` }
-                        </Text>
-                    </Center>
-                </Box>
+                            <Text style={{
+                                color: 'black',
+                                textAlign: 'center',
+                            }}>
+                                { `${seconds}/15` }
+                            </Text>
+                        </Center>
+                    </Box>
+
+
+                    <Ft8 />
+                </Provider>
+
             </NativeBaseProvider>
             
-            <Provider store={ store }>
-                <Ft8 />
-            </Provider>
             
         </>
     )
