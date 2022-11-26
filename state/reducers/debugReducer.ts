@@ -19,19 +19,19 @@ export const removeDebugFields: any = () => ({ type: 'REMOVE_DEBUG_FIELDS', payl
 
 export default function debug(state: DebugState = { values: [] }, action: PayloadAction<DebugField>) {
     switch (action.type) {
-        case 'ADD_DEBUG_FIELD':
-            return {
-                ...state,
-                values: state.values.concat((action.payload))
-            }
-        case 'REMOVE_DEBUG_FIELD':
-            return {
-                ...state,
-                values: state.values.filter((v: DebugField) => v.fieldName !== action.payload.fieldName)
-            }
-        case 'REMOVE_DEBUG_FIELDS':
-            return { values: [] }
-      default:
+    case 'ADD_DEBUG_FIELD':
+        return {
+            ...state,
+            values: state.values.concat((action.payload))
+        }
+    case 'REMOVE_DEBUG_FIELD':
+        return {
+            ...state,
+            values: state.values.filter((v: DebugField) => v.fieldName !== action.payload.fieldName)
+        }
+    case 'REMOVE_DEBUG_FIELDS':
+        return { values: [] }
+    default:
         return state
     }
 }

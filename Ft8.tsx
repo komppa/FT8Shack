@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import useCachedResources from './hooks/useCachedResources';
-import useColorScheme from './hooks/useColorScheme';
-import Navigation from './navigation';
-import { Button, View, TextInput } from "react-native";
-import WebView from "react-native-webview";
-import { useWebViewMessage } from "react-native-react-bridge";
-import ApiPoker from './apiPoker.js';
-import { StorageAccessFramework } from 'expo-file-system';
+import React, { useState, useEffect } from 'react'
+import { StatusBar } from 'expo-status-bar'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import useCachedResources from './hooks/useCachedResources'
+import useColorScheme from './hooks/useColorScheme'
+import Navigation from './navigation'
+import { Button, View, TextInput } from 'react-native'
+import WebView from 'react-native-webview'
+import { useWebViewMessage } from 'react-native-react-bridge'
+import ApiPoker from './apiPoker.js'
+import { StorageAccessFramework } from 'expo-file-system'
 import { Buffer } from '@craftzdog/react-native-buffer'
-import { Audio } from 'expo-av';
-import * as MediaLibrary from 'expo-media-library';
-import * as FileSystem from 'expo-file-system';
-import { FFmpegKit } from 'ffmpeg-kit-react-native';
+import { Audio } from 'expo-av'
+import * as MediaLibrary from 'expo-media-library'
+import * as FileSystem from 'expo-file-system'
+import { FFmpegKit } from 'ffmpeg-kit-react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { store } from './state/store'
 import {
@@ -21,24 +21,28 @@ import {
     removeDebugField,
     removeDebugFields
 } from './state/reducers/debugReducer'
+import {
+    fetchTimeFromGNSS,
+    initializeTime
+} from './state/reducers/timeReducer'
 
 // Globals
 let permissions: any
 let uri: any
-let createdFilename: any;
-let recordingUri;  // RECORDING FRO MEXPO 
+let createdFilename: any
+let recordingUri  // RECORDING FRO MEXPO 
 
 // For performance measurements
-var start_meas: any
-var middle_meas: any
-var end_meas: any
+let start_meas: any
+let middle_meas: any
+let end_meas: any
 
 
 
 
 const bufferFrom16Array = (array16: any) => {
 
-    let buf = []
+    const buf = []
     let wi = 0
 
     for (let i = 0; i < array16.length; i++) {
@@ -57,7 +61,7 @@ const bufferFrom16Array = (array16: any) => {
 // Used by file2audio
 const array16FromBuffer = (buffer: any) => {
 
-    let arr = [];
+    const arr = []
     const arrayLength = 350000
 
     for (let i = 0; i < arrayLength; i++) {
@@ -96,8 +100,8 @@ const saveAndPlayDecodedMessage = async (dataArray: any) => {
 
             // For performance analysis
             end_meas = performance.now()
-            console.log(`Call to start to receved took ${middle_meas - start_meas} milliseconds.`);
-            console.log(`Call to start to writed file took ${end_meas - start_meas} milliseconds.`);
+            console.log(`Call to start to receved took ${middle_meas - start_meas} milliseconds.`)
+            console.log(`Call to start to writed file took ${end_meas - start_meas} milliseconds.`)
 
             // Play encoded ft8 audio
             await sound.playAsync()
@@ -111,153 +115,194 @@ const saveAndPlayDecodedMessage = async (dataArray: any) => {
 export default function Ft8() {
     
     
-        const dispatch = useDispatch()
-        const selector = useSelector((state: any) => state.debug)
+    const dispatch = useDispatch()
+    const selector = useSelector((state: any) => state.debug)
 
-        const [messageInput, setMessageInput] = useState("CQ OH9KR KP26")
-        const [recording, setRecording] = useState()
-        const [receivedMessages, setReceivedMessages] = useState([])
-        const [debugData, setDegubData] = useState({random: ""})
+
+    const tests = useSelector((state: any) => state.time)
+    const counter = null
+
+    // console.log('TESTS', tests)
+    // useEffect(() => {
+    //     // dispatch(fetchTimeFromGNSS())
+    //     console.log('DISPATCHGIN')
+    //     dispatch(initializeTime())
+
+    //     // setTimeout(() => {
+    //     //     dispatch(
+    //     //         fetchTimeFromGNSS()
+    //     //     )
+    //     // }, 3000)
+
+
+    // }, [dispatch])
+
+    
+
+
+    // SetTimeout accuracy test
+    // const cTime = Date.now()
+    // counter = setTimeout(() => {
+    //     console.log('accuracy' ,(Date.now() - 1000) - cTime)
+    // }, 1000)
+
+
+
+
+    // const [time, setTime] = useState(Math.floor(Date.now() / 1000))
+
+    // setInterval(() => setTime(Math.floor(Date.now() / 1000)))
+
+    // useEffect(() => {
+    //     console.log('acc', time)
+    // }, [time])
+
+
+
+    const [messageInput, setMessageInput] = useState('CQ OH9KR KP26')
+    const [recording, setRecording] = useState()
+    const [receivedMessages, setReceivedMessages] = useState([])
+    const [debugData, setDegubData] = useState({random: ''})
         
-        // For creating debug field
-        const [localFieldName, setLocalFieldName] = useState("")
-        const [localFieldValue, setLocalFieldValue] = useState("")
+    // For creating debug field
+    const [localFieldName, setLocalFieldName] = useState('')
+    const [localFieldValue, setLocalFieldValue] = useState('')
 
         
 
-        // START RECORDING AUDIO
-        const onPressRecord = async () => {
+    // START RECORDING AUDIO
+    const onPressRecord = async () => {
 
             
-            // EXCPO AV
+        // EXCPO AV
             
-            try {
-                console.log('Requesting permissions..');
-                const recPermissions = await Audio.requestPermissionsAsync();   // TODO move this out of here. Should ask @startup
-                console.log("Permissions over", recPermissions);
+        try {
+            console.log('Requesting permissions..')
+            const recPermissions = await Audio.requestPermissionsAsync()   // TODO move this out of here. Should ask @startup
+            console.log('Permissions over', recPermissions)
 
-                await Audio.setAudioModeAsync({});
-                console.log('Starting recording..');
-                const { recording } = await Audio.Recording.createAsync({
-                    isMeteringEnabled: true,
-                    android: {
-                        extension: '.mp4',
-                        outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-                        audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
-                        sampleRate: 12000, // 44100, = expo defulat
-                        numberOfChannels: 1,
-                        bitRate: 128000,
-                    },
-                    ios: {
-                        extension: '.m4a',
-                        outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-                        audioQuality: Audio.IOSAudioQuality.MAX,
-                        sampleRate: 44100,
-                        numberOfChannels: 2,
-                        bitRate: 128000,
-                        linearPCMBitDepth: 16,
-                        linearPCMIsBigEndian: false,
-                        linearPCMIsFloat: false,
-                    },
-                    web: {
-                        mimeType: 'audio/webm',
-                        bitsPerSecond: 128000,
-                    },
-                });
-                setRecording(recording);
-                console.log('Recording started');
-              } catch (err) {
-                console.error('Failed to start recording', err);
-              }
+            await Audio.setAudioModeAsync({})
+            console.log('Starting recording..')
+            const { recording } = await Audio.Recording.createAsync({
+                isMeteringEnabled: true,
+                android: {
+                    extension: '.mp4',
+                    outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+                    audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
+                    sampleRate: 12000, // 44100, = expo defulat
+                    numberOfChannels: 1,
+                    bitRate: 128000,
+                },
+                ios: {
+                    extension: '.m4a',
+                    outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+                    audioQuality: Audio.IOSAudioQuality.MAX,
+                    sampleRate: 44100,
+                    numberOfChannels: 2,
+                    bitRate: 128000,
+                    linearPCMBitDepth: 16,
+                    linearPCMIsBigEndian: false,
+                    linearPCMIsFloat: false,
+                },
+                web: {
+                    mimeType: 'audio/webm',
+                    bitsPerSecond: 128000,
+                },
+            })
+            setRecording(recording)
+            console.log('Recording started')
+        } catch (err) {
+            console.error('Failed to start recording', err)
+        }
               
-        }
+    }
 
-        const onPressStopRecord = async () => {
+    const onPressStopRecord = async () => {
 
-            start_meas = performance.now();
+        start_meas = performance.now()
 
-            console.log('Stopping recording..');
-            setRecording(undefined);
-            await recording.stopAndUnloadAsync();
-            recordingUri = recording.getURI();
-            console.log('Recording stopped and stored at', recordingUri);
+        console.log('Stopping recording..')
+        setRecording(undefined)
+        await recording.stopAndUnloadAsync()
+        recordingUri = recording.getURI()
+        console.log('Recording stopped and stored at', recordingUri)
 
-            let sourceFile = recordingUri;
-            let destinationFile = `file:///data/user/0/com.rantakangas.ft8shack/cache/Audio/myConversion22.wav`; // fileForConvertedRecord
+        const sourceFile = recordingUri
+        const destinationFile = 'file:///data/user/0/com.rantakangas.ft8shack/cache/Audio/myConversion22.wav' // fileForConvertedRecord
 
-            console.log("sourceFile", sourceFile, "& destinationFile", destinationFile);
+        console.log('sourceFile', sourceFile, '& destinationFile', destinationFile)
 
-            FFmpegKit
-                .execute(`-i ${sourceFile} -acodec pcm_u8 -ar 12000 -ac 1 -c:a pcm_s16le ${destinationFile}`)
-                .then(async (session) => {
-                    console.log(209, "Converting successfully completed!", session)
+        FFmpegKit
+            .execute(`-i ${sourceFile} -acodec pcm_u8 -ar 12000 -ac 1 -c:a pcm_s16le ${destinationFile}`)
+            .then(async (session) => {
+                console.log(209, 'Converting successfully completed!', session)
 
-                    // Optional, just for debugging if the original decode_ft8 works
-                    // MediaLibrary.saveToLibraryAsync(destinationFile)
-                    // console.log("saved to library maybe async DESTINATIONFILE =====" , destinationFile)
+                // Optional, just for debugging if the original decode_ft8 works
+                // MediaLibrary.saveToLibraryAsync(destinationFile)
+                // console.log("saved to library maybe async DESTINATIONFILE =====" , destinationFile)
 
-                    // DECODE FT8 FROM DESTINATION FILE
-                    const testFile = await StorageAccessFramework.readAsStringAsync(destinationFile, {
-                        encoding: 'base64',
-                        length: 350000
-                    })
-
-                    emit({ type: "DECODE_FT8", data: array16FromBuffer(Buffer.from(testFile, 'base64')) })
-
-                    console.log("Deleting recoded audio")
-                    await StorageAccessFramework.deleteAsync(destinationFile, { idempotent: true })
-                    console.log(`Deleted file: "${destinationFile}"`)
-
-
+                // DECODE FT8 FROM DESTINATION FILE
+                const testFile = await StorageAccessFramework.readAsStringAsync(destinationFile, {
+                    encoding: 'base64',
+                    length: 350000
                 })
-                .catch(async (err) => {
-                    console.log(`FFmpeg errored!! #: ${err.message} ::: ${err}`)
-                    console.log("...still, deleting recoded audio")
-                    await StorageAccessFramework.deleteAsync(destinationFile, { idempotent: true })
-                    console.log(`Deleted file: "${destinationFile}"`)
-                })
-        }
+
+                emit({ type: 'DECODE_FT8', data: array16FromBuffer(Buffer.from(testFile, 'base64')) })
+
+                console.log('Deleting recoded audio')
+                await StorageAccessFramework.deleteAsync(destinationFile, { idempotent: true })
+                console.log(`Deleted file: "${destinationFile}"`)
 
 
-        useEffect(() => {
+            })
+            .catch(async (err) => {
+                console.log(`FFmpeg errored!! #: ${err.message} ::: ${err}`)
+                console.log('...still, deleting recoded audio')
+                await StorageAccessFramework.deleteAsync(destinationFile, { idempotent: true })
+                console.log(`Deleted file: "${destinationFile}"`)
+            })
+    }
+
+
+    useEffect(() => {
             
-            (async () => {
+        (async () => {
 
-                // uri = StorageAccessFramework.getUriForDirectoryInRoot('Pictures')
-                // console.debug("uri ", uri)
-                // permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync(uri)
+            // uri = StorageAccessFramework.getUriForDirectoryInRoot('Pictures')
+            // console.debug("uri ", uri)
+            // permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync(uri)
 
-                const mediaPermissions = await MediaLibrary.requestPermissionsAsync()
+            const mediaPermissions = await MediaLibrary.requestPermissionsAsync()
                 
-            })()
+        })()
             
-        }, [])
+    }, [])
         
         
     // useWebViewMessage hook create props for WebView and handle communication
     // The argument is callback to receive message from React
     const { ref, onMessage, emit } = useWebViewMessage((message: any) => {
         // console.log("@App reeived msg from WebView! Msg is=", message);
-        if (message.type === "saveAndPlayDecodedMessage") {
+        if (message.type === 'saveAndPlayDecodedMessage') {
             saveAndPlayDecodedMessage(message.data, setDegubData)
-        } else if (message.type === "showContent") {
+        } else if (message.type === 'showContent') {
             setReceivedMessages(message.data)
         }
 
-        if (message.type === "LOG") console.log(message.data)
+        if (message.type === 'LOG') console.log(message.data)
         
-    });
+    })
 
-    const isLoadingComplete = useCachedResources();
-    const colorScheme = useColorScheme();
+    const isLoadingComplete = useCachedResources()
+    const colorScheme = useColorScheme()
 
     
     if (!isLoadingComplete) {
-        return null;
+        return null
     } else {
         return (
 
-                <SafeAreaProvider>
+            <SafeAreaProvider>
 
                 <Navigation colorScheme={colorScheme} />
 
@@ -273,30 +318,30 @@ export default function Ft8() {
                 
                 {/* Do not show this since it only for poking WebAssemvbly */}
                 <View>
-                <WebView
-                    incognito={true}
-                    ref={ref}
-                    // Pass the source code of React App
-                    source={{ html: ApiPoker }}
-                    onMessage={onMessage}
-                />
+                    <WebView
+                        incognito={true}
+                        ref={ref}
+                        // Pass the source code of React App
+                        source={{ html: ApiPoker }}
+                        onMessage={onMessage}
+                    />
                 </View>
 
                 <TextInput
                     value={JSON.stringify(
                         selector
                     )}
-                    placeholder={"Something should be here"}
+                    placeholder={'Something should be here'}
                 />
 
                 <TextInput
                     value={ JSON.stringify(debugData) }
-                    placeholder={"Logs Are Here"}
+                    placeholder={'Logs Are Here'}
                 />
                 
                 <TextInput
                     value={messageInput}
-                    placeholder={"Message here"}
+                    placeholder={'Message here'}
                     onChangeText={setMessageInput}
                 >
 
@@ -306,12 +351,12 @@ export default function Ft8() {
 
                 <TextInput
                     value={ localFieldName }
-                    placeholder={"Field Name"}
+                    placeholder={'Field Name'}
                     onChangeText={setLocalFieldName}
                 />
                 <TextInput
                     value={ localFieldValue }
-                    placeholder={"Field Value"}
+                    placeholder={'Field Value'}
                     onChangeText={setLocalFieldValue}
                 />
 
@@ -341,7 +386,7 @@ export default function Ft8() {
                     title="TX"
                     onPress={() => {
                         start_meas = performance.now()
-                        emit({ type: "ENCODE_FT8", data: messageInput })
+                        emit({ type: 'ENCODE_FT8', data: messageInput })
                     } }
                 />
 
@@ -354,9 +399,9 @@ export default function Ft8() {
                 <StatusBar />
                 
                 
-                </SafeAreaProvider>
+            </SafeAreaProvider>
                 
-            );
-        }
+        )
     }
+}
     
